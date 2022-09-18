@@ -45,7 +45,8 @@ class WaveformAnalyzer
     }
 
     /**
-     * Find longest channel monolog. Method analyze conversations overlap to detect monolog.
+     * Find longest channel monolog.
+     * Method analyze whether there is conversations overlap in all channels to detect monologs.
      *
      * @param string $channelId
      * @param array $channelsData
@@ -62,8 +63,10 @@ class WaveformAnalyzer
         $monologs = [];
 
         foreach ($conversations as $period) {
-            if (!$this->conversationOverlap($period, $channelsData, $channelId)) {
-                $monologs[] = round($period[1] - $period[0], 3);
+            if (!$this->hasConversationOverlap($period, $channelsData, $channelId)) {
+                list($conversationStart, $conversationEnd) = $period;
+
+                $monologs[] = round($conversationEnd - $conversationStart, 3);
             }
         }
 
@@ -101,7 +104,7 @@ class WaveformAnalyzer
      * @param string $skipChannelId
      * @return boolean
      */
-    private function conversationOverlap(array $period, array $channelsData, string $skipChannelId): bool
+    private function hasConversationOverlap(array $period, array $channelsData, string $skipChannelId): bool
     {
         list($conversationStart, $conversationEnd) = $period;
 
@@ -167,7 +170,7 @@ class WaveformAnalyzer
 
         foreach ($channelConversations as $period) {
             list($periodStart, $periodEnd) = $period;
-            
+
             $channelConversationDuration += $periodEnd - $periodStart;
         }
 

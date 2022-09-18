@@ -70,7 +70,7 @@ class WaveformFileParser
                     if ($marker != Config::SILENCE_END_MARKER) {
                         throw new Exception('The file has invalid data, there are more than one silence_start consecutive markers');
                     }
-                    
+
                     $this->pushSilencePeriod($parsedResponse, $silenceStart, $markerValue);
 
                     $silenceStart = false;
@@ -104,10 +104,10 @@ class WaveformFileParser
     }
 
     /**
-     * @param array $periods 
-     * @param float $silenceStart 
-     * @param float $silenceEnd 
-     * @return void 
+     * @param array $periods
+     * @param float $silenceStart
+     * @param float $silenceEnd
+     * @return void
      */
     private function pushSilencePeriod(array & $periods, float $silenceStart, float $silenceEnd): void
     {
@@ -115,6 +115,6 @@ class WaveformFileParser
             Config::SILENCE_START_MARKER => $silenceStart,
             Config::SILENCE_END_MARKER => $silenceEnd
         ];
-        
+
     }
 }
