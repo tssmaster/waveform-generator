@@ -8,8 +8,8 @@
 [silencedetect @ 0x7fa7edd0c160] silence_end: 139.79 | silence_duration: 81.51
 [silencedetect @ 0x7fa7edd0c160] silence_start: 225.281
 [silencedetect @ 0x7fa7edd0c160] silence_end: 378.124 | silence_duration: 152.843
-[silencedetect @ 0x7fa7edd0c160] silence_start: 225.281
-[silencedetect @ 0x7fa7edd0c160] silence_end: 378.124 | silence_duration: 152.843
+[silencedetect @ 0x7fa7edd0c160] silence_start: 390.281
+[silencedetect @ 0x7fa7edd0c160] silence_end: 402.124 | silence_duration: 11.843
 [silencedetect @ 0x7fa7edd0c160] silence_start: 425.825
 [silencedetect @ 0x7fa7edd0c160] silence_end: 493.223 | silence_duration: 67.398
 [silencedetect @ 0x7fa7edd0c160] silence_start: 575.382

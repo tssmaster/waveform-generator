@@ -2,24 +2,36 @@
 
 namespace App\Service;
 
+use App\Configuration\Config;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 /**
- * Parse waveform files to extract conversation periods
+ * Parse waveform files to extract silence periods
  */
 class WaveformFileParser
 {
-    public const SILENCE_START_MARKER = 'silence_start';
-
-    public const SILENCE_END_MARKER = 'silence_end';
+    private ContainerBagInterface $container;
 
     /**
-     * @param string $file
+     * @param ContainerBagInterface $container
+     */
+    public function __construct(ContainerBagInterface $container)
+    {
+        $this->container = $container;
+    }
+
+    /**
+     * Parse waveform file and return array of all silence periods
+     *
+     * @param string $channel
      * @return array
      */
-    public function parseFile(string $file): array
+    public function parseFile(string $channel): array
     {
+        $file = $this->getParseFilePath($channel);
+
         if (!file_exists($file)) {
             throw new InvalidArgumentException(sprintf('%s does not exist', $file));
         }
@@ -34,11 +46,11 @@ class WaveformFileParser
         $parsedResponse = [];
         $silenceStart = null;
 
-        foreach ($lines as $line) {
+        foreach ($lines as $index => $line) {
             $matches = null;
-            $res = preg_match('/\[.*\][ ]*(' . self::SILENCE_START_MARKER . '|' . self::SILENCE_END_MARKER.'):[ ]*(\d+(?:\.\d+)?)/', $line, $matches);
+            $res = preg_match('/\[.*\][ ]*(' . Config::SILENCE_START_MARKER . '|' . Config::SILENCE_END_MARKER.'):[ ]*(\d+(?:\.\d+)?)/', $line, $matches);
 
-            if (!$res || empty($matches[1]) || empty($matches[2])){
+            if (!$res || empty($matches[1]) || empty($matches[2])) {
                 throw new Exception('The file is corrupt or has invalid data');
             }
 
@@ -47,28 +59,62 @@ class WaveformFileParser
 
             // First row parsing
             if ($silenceStart === null) {
-                if ($marker == self::SILENCE_START_MARKER) {
+                if ($marker == Config::SILENCE_START_MARKER) {
                     $silenceStart = $markerValue;
                 } else {
-                    $parsedResponse[] = [0, $markerValue];
+                    $this->pushSilencePeriod($parsedResponse, 0, $markerValue);
                     $silenceStart = false;
                 }
             } else {
                 if ($silenceStart !== false) {
-                    if ($marker != self::SILENCE_END_MARKER) {
+                    if ($marker != Config::SILENCE_END_MARKER) {
                         throw new Exception('The file has invalid data, there are more than one silence_start consecutive markers');
                     }
-                    $parsedResponse[] = [$silenceStart, $markerValue];
+                    
+                    $this->pushSilencePeriod($parsedResponse, $silenceStart, $markerValue);
+
                     $silenceStart = false;
                 } else {
-                    if ($marker != self::SILENCE_START_MARKER) {
+                    if ($marker != Config::SILENCE_START_MARKER) {
                         throw new Exception('The file has invalid data, there are more than one silence_end consecutive markers');
                     }
                     $silenceStart = $markerValue;
                 }
             }
+
+            /**
+             * Handle last line if it's silence_start, we will consider that the conversation stops immediately,
+             * but we need this marker in final response to calculate duration of the last conversation
+             */
+            if ($index == count($lines) - 1 && $marker == Config::SILENCE_START_MARKER) {
+                $this->pushSilencePeriod($parsedResponse, $markerValue, $markerValue);
+            }
         }
 
         return $parsedResponse;
+    }
+
+    /**
+     * @param string $channel
+     * @return string
+     */
+    private function getParseFilePath(string $channel): string
+    {
+        return $this->container->get('waveform_files_dir') . DIRECTORY_SEPARATOR . $channel . '.' . Config::CHANNEL_FILE_EXT;
+    }
+
+    /**
+     * @param array $periods 
+     * @param float $silenceStart 
+     * @param float $silenceEnd 
+     * @return void 
+     */
+    private function pushSilencePeriod(array & $periods, float $silenceStart, float $silenceEnd): void
+    {
+        $periods[] = [
+            Config::SILENCE_START_MARKER => $silenceStart,
+            Config::SILENCE_END_MARKER => $silenceEnd
+        ];
+        
     }
 }
