@@ -1,7 +1,7 @@
 ### Waveform Generator
 
 Requirements:
-- PHP >= 7.2.5
+- PHP >= 7.5.12
 - Apache or Nginx web server
 
 Installation:
